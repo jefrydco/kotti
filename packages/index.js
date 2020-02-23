@@ -27,7 +27,7 @@ import KtPopover from './kotti-popover'
 import KtPagenation from './kotti-pagination'
 import KtRadio from './kotti-radio'
 import KtRow from './kotti-row'
-import KtSingleSelect from './kotti-single-select'
+import KtSelect from './kotti-single-select'
 import KtSwitch from './kotti-switch'
 import KtStep from './kotti-step'
 import KtSteps from './kotti-steps'
@@ -72,7 +72,7 @@ const components = {
 	KtRadio,
 	KtRadioGroup,
 	KtRow,
-	KtSingleSelect,
+	KtSelect,
 	KtSwitch,
 	KtStep,
 	KtSteps,
@@ -81,8 +81,18 @@ const components = {
 	KtUserMenu,
 }
 
-function install(Vue) {
-	for (const component of Object.values(components)) Vue.use(component)
+function install(Vue, _VueSimplePortal) {
+	if (typeof _VueSimplePortal === 'undefined')
+		throw new Error(
+			'[KOTTI-UI] vue simple portal was not passed to the kotti-ui plugin',
+		)
+
+	// eslint-disable-next-line no-console
+	console.log('hi, im local kotti setup 123')
+
+	Vue.use(_VueSimplePortal, { name: 'vue-simple-portal' })
+	for (const { install: componentInstallFn } of Object.values(components))
+		Vue.use(componentInstallFn)
 
 	Vue.prototype.$KtNavbar = new Vue({
 		data: {
@@ -144,7 +154,7 @@ export {
 	KtRadio,
 	KtRadioGroup,
 	KtRow,
-	KtSingleSelect,
+	KtSelect,
 	KtSwitch,
 	KtStep,
 	KtSteps,

@@ -28,9 +28,10 @@
 					style="pointer-events: none;"
 					v-text="indicatorRep"
 				/>
-				<Portal>
+				<vue-simple-portal selector="#portal-target">
 					<template v-if="visible">
 						<div
+							id="portal-target"
 							v-on-clickaway="handleClickOutside"
 							:style="selectorOptionStyle"
 							class="kt-select-options"
@@ -58,22 +59,20 @@
 							</ul>
 						</div>
 					</template>
-				</Portal>
+				</vue-simple-portal>
 			</div>
 		</div>
 	</div>
 </template>
 
 <script>
-import { Portal } from '@linusborg/vue-simple-portal'
 import { mixin as clickaway } from 'vue-clickaway'
 import { isBrowser } from '../../util'
 
 export default {
 	name: 'KtSelect',
-	components: { Portal },
 	mixins: [clickaway],
-	inheritAttrs: false,
+	// inheritAttrs: false,
 	props: {
 		allowEmpty: {
 			default: false,
@@ -130,6 +129,10 @@ export default {
 		required: {
 			default: false,
 			type: Boolean,
+		},
+		placement: {
+			type: String,
+			default: 'bottom',
 		},
 	},
 	data() {
@@ -216,6 +219,7 @@ export default {
 		},
 	},
 	mounted() {
+		console.log(this.placement)
 		this.computeSelectorOptionsStyle()
 		window.addEventListener('resize', this.computeSelectorOptionsStyle)
 	},
