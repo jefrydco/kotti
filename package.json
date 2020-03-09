@@ -110,7 +110,8 @@
 	},
 	"files": [
 		"dist",
-		"packages/kotti-style/_variables.scss"
+		"packages/kotti-style/_variables.scss",
+		"packages/kotti-style/mixins/index.scss"
 	],
 	"husky": {
 		"hooks": {
