@@ -126,6 +126,15 @@
 							size="small"
 							type="switch"
 						/>
+						<KtFieldToggle
+							v-if="componentDefinition.additionalProps.includes('dateShortcuts')"
+							formKey="dateShortcuts"
+							isOptional
+							helpText="Adds some generic date shortcuts. Can be customized entirely."
+							label="include shortcuts"
+							size="small"
+							type="switch"
+						/>
 					</KtFormControllerObject>
 				</div>
 				<div>
@@ -198,6 +207,7 @@
 
 <script lang="ts">
 import { defineComponent, ref, computed } from '@vue/composition-api'
+import dayjs from 'dayjs'
 import cloneDeep from 'lodash/cloneDeep'
 
 import data from '../../../packages/next/data.json'
@@ -250,25 +260,25 @@ const components: Array<{
 	supports: KottiField.Supports
 }> = [
 	{
-		additionalProps: [],
+		additionalProps: ['dateShortcuts'],
 		formKey: 'dateValue',
 		name: 'KtFieldDate',
 		supports: KOTTI_FIELD_DATE_SUPPORTS,
 	},
 	{
-		additionalProps: [],
+		additionalProps: ['dateShortcuts'],
 		formKey: 'dateRangeValue',
 		name: 'KtFieldDateRange',
 		supports: KOTTI_FIELD_DATE_SUPPORTS,
 	},
 	{
-		additionalProps: [],
+		additionalProps: ['dateShortcuts'],
 		formKey: 'dateTimeValue',
 		name: 'KtFieldDateTime',
 		supports: KOTTI_FIELD_DATE_SUPPORTS,
 	},
 	{
-		additionalProps: [],
+		additionalProps: ['dateShortcuts'],
 		formKey: 'dateTimeRangeValue',
 		name: 'KtFieldDateTimeRange',
 		supports: KOTTI_FIELD_DATE_SUPPORTS,
@@ -399,6 +409,9 @@ const generateCode = (component: ComponentValue) =>
 		'/>',
 	].join('\n')
 
+const ISO_DATE = 'YYYY-MM-DD'
+const ISO_DATE_TIME = 'YYYY-MM-DD HH:mm:ss'
+
 export default defineComponent({
 	name: 'KtFormFieldsDocumentation',
 	setup() {
@@ -406,6 +419,7 @@ export default defineComponent({
 
 		const settings = ref<{
 			additionalProps: {
+				dateShortcuts: boolean
 				numberHideMaximum: boolean
 				numberMaximum: number | null
 				numberMinimum: number | null
@@ -425,6 +439,7 @@ export default defineComponent({
 			leftIcon: Yoco.Icon | null
 			locale: KottiTranslation.SupportedLanguages
 			placeholder: KottiFieldText.Value
+			placeholders: KottiFieldDateRange.Props['placeholder']
 			prefix: KottiFieldText.Value
 			rightIcon: Yoco.Icon | null
 			size: 'small' | 'medium' | 'large'
@@ -432,6 +447,7 @@ export default defineComponent({
 			validation: KottiField.Validation.Result['type']
 		}>({
 			additionalProps: {
+				dateShortcuts: false,
 				numberHideMaximum: false,
 				numberMaximum: null,
 				numberMinimum: null,
@@ -451,6 +467,7 @@ export default defineComponent({
 			leftIcon: null,
 			locale: 'en-US',
 			placeholder: null,
+			placeholders: ['From', 'To'],
 			prefix: null,
 			rightIcon: null,
 			size: 'medium',
@@ -468,6 +485,7 @@ export default defineComponent({
 			return result
 		})
 
+		// eslint-disable-next-line sonarjs/cognitive-complexity
 		const componentProps = computed(() => {
 			const { component } = settings.value
 
@@ -523,6 +541,106 @@ export default defineComponent({
 					minimum: settings.value.additionalProps.numberMinimum,
 				})
 
+			const today = dayjs()
+			const yesterday = dayjs().subtract(1, 'day')
+
+			if (
+				componentDefinition.value.additionalProps.includes('dateShortcuts') &&
+				componentDefinition.value.name === 'KtFieldDateRange'
+			)
+				Object.assign(additionalProps, {
+					shortcuts: [
+						{
+							label: 'Today',
+							value: [today.format(ISO_DATE), today.format(ISO_DATE)],
+						},
+						{
+							label: 'Yesterday',
+							value: [yesterday.format(ISO_DATE), today.format(ISO_DATE)],
+						},
+						{
+							keepOpen: true,
+							label: 'Next Week',
+							value: [
+								dayjs(values.value.dateRangeValue[0] ?? undefined).format(
+									ISO_DATE,
+								),
+								dayjs(values.value.dateRangeValue[0] ?? undefined)
+									.add(1, 'week')
+									.format(ISO_DATE),
+							],
+						},
+					],
+				})
+
+			if (
+				componentDefinition.value.additionalProps.includes('dateShortcuts') &&
+				componentDefinition.value.name === 'KtFieldDate'
+			)
+				Object.assign(additionalProps, {
+					shortcuts: [
+						{ label: 'Today', value: today.format(ISO_DATE) },
+						{ label: 'Yesterday', value: yesterday.format(ISO_DATE) },
+						{
+							label: 'Next Week',
+							value: dayjs(values.value.dateValue ?? undefined)
+								.add(1, 'week')
+								.format(ISO_DATE),
+							keepOpen: true,
+						},
+					],
+				})
+
+			if (
+				componentDefinition.value.additionalProps.includes('dateShortcuts') &&
+				componentDefinition.value.name === 'KtFieldDateTimeRange'
+			)
+				Object.assign(additionalProps, {
+					shortcuts: [
+						{
+							label: 'Today',
+							value: [today.format(ISO_DATE_TIME), today.format(ISO_DATE_TIME)],
+						},
+						{
+							label: 'Yesterday',
+							value: [
+								yesterday.format(ISO_DATE_TIME),
+								today.format(ISO_DATE_TIME),
+							],
+						},
+						{
+							label: 'Next Week',
+							value: [
+								dayjs(values.value.dateTimeRangeValue[0] ?? undefined).format(
+									ISO_DATE_TIME,
+								),
+								dayjs(values.value.dateTimeRangeValue[0] ?? undefined)
+									.add(1, 'week')
+									.format(ISO_DATE_TIME),
+							],
+							keepOpen: true,
+						},
+					],
+				})
+
+			if (
+				componentDefinition.value.additionalProps.includes('dateShortcuts') &&
+				componentDefinition.value.name === 'KtFieldDateTime'
+			)
+				Object.assign(additionalProps, {
+					shortcuts: [
+						{ label: 'Today', value: today.format(ISO_DATE_TIME) },
+						{ label: 'Yesterday', value: yesterday.format(ISO_DATE_TIME) },
+						{
+							label: 'Next Week',
+							value: dayjs(values.value.dateTimeValue ?? undefined)
+								.add(1, 'week')
+								.format(ISO_DATE_TIME),
+							keepOpen: true,
+						},
+					],
+				})
+
 			if (
 				[
 					'KtFieldMultiSelect',
@@ -559,6 +677,11 @@ export default defineComponent({
 			)
 				Object.assign(additionalProps, {
 					placeholder: settings.value.placeholder,
+				})
+
+			if (['KtFieldDateTimeRange', 'KtFieldDateRange'].includes(component))
+				Object.assign(additionalProps, {
+					placeholder: settings.value.placeholders,
 				})
 
 			return { ...standardProps, ...additionalProps }
