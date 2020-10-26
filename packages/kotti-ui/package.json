@@ -10,7 +10,7 @@
 	"dependencies": {
 		"@3yourmind/vue-use-tippy": "1.x",
 		"@3yourmind/yoco": "2.x",
-		"@popperjs/core": "2.0.6",
+		"@popperjs/core": "^2.5.3",
 		"color": "3.x",
 		"deep-eql": "^4.0.0",
 		"deepmerge": "^4.2.2",
@@ -19,7 +19,8 @@
 		"normalize.css": "^8.0.1",
 		"tippy.js": "6.x",
 		"ts-custom-error": "^3.1.1",
-		"vue-clickaway": "^2.2.2"
+		"vue-clickaway": "^2.2.2",
+		"vue-tippy": "^4.7.1"
 	},
 	"description": "Kotti Vue Component UI",
 	"devDependencies": {

@@ -1,7 +1,6 @@
 <template>
 	<div>
-		<!-- TODO: implement popover -->
-		<div v-if="showPopup" class="kt-form-submit__popup">
+		<div v-if="showTippy" ref="tippyContentRef" class="kt-form-submit__popup">
 			<h4 class="kt-form-submit__popup__title" v-text="translations.title" />
 
 			<div
@@ -30,10 +29,10 @@
 				</ul>
 			</div>
 		</div>
-
 		<button
+			ref="submitButtonRef"
 			class="kt-button primary kt-form-submit__button"
-			:disabled="isDisabled"
+			:disabled="isDisabled || isLoading"
 			type="submit"
 		>
 			<i v-if="isLoading" class="kt-circle-loading" />
@@ -44,7 +43,8 @@
 
 <script lang="ts">
 import { Yoco } from '@3yourmind/yoco'
-import { defineComponent, inject, computed } from '@vue/composition-api'
+import { defineComponent, inject, computed, ref } from '@vue/composition-api'
+import { useTippy } from 'vue-tippy/composition'
 
 import { useTranslationNamespace } from '../kotti-translation/hooks'
 
@@ -65,6 +65,15 @@ export default defineComponent({
 
 		if (context === null) throw new KtFormErrors.InvalidSubmitOutsideContext()
 
+		// https://kabbouchi.github.io/vue-tippy/4.0/all-options.html
+		const submitButtonRef = ref<Element>(null)
+		const tippyContentRef = ref<Element>(null)
+		useTippy(submitButtonRef, {
+			content: tippyContentRef,
+			interactive: true,
+			trigger: 'click focus',
+		})
+
 		const { isLoading, isValid, validationSummary } = context
 		const errors = computed(() => validationSummary.value.errors)
 		const warnings = computed(() => validationSummary.value.warnings)
@@ -73,9 +82,11 @@ export default defineComponent({
 			errors,
 			isDisabled: computed(() => !isValid.value || isLoading.value),
 			isLoading,
-			showPopup: computed(
+			showTippy: computed(
 				() => errors.value.length > 0 || warnings.value.length > 0,
 			),
+			submitButtonRef,
+			tippyContentRef,
 			translations: useTranslationNamespace('KtFormSubmit'),
 			warnings,
 			Yoco,

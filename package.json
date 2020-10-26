@@ -47,6 +47,7 @@
 		}
 	],
 	"dependencies": {
+		"@vue/composition-api": "0.6.0",
 		"typescript": "^3.9.6"
 	},
 	"devDependencies": {
