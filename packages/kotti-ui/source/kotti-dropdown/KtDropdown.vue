@@ -1,6 +1,6 @@
 <template>
 	<div class="kt-dropdown">
-		<KtPopover :placement="placement" :size="size">
+		<KtPopover :placement="placement" :size="size" trigger="click">
 			<slot />
 			<div slot="content">
 				<slot name="KtDropdownMenus" />

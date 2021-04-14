@@ -30,6 +30,7 @@ export {
 } from '../kotti-form/controllers/types'
 export { KottiModal as Modal } from '../kotti-modal/types'
 export { KottiNavbar as Navbar } from '../kotti-navbar/types'
+export { KottiPopover as Popover } from '../kotti-popover/types'
 export { KottiRow as Row } from '../kotti-row/types'
 
 export enum MetaDesignType {

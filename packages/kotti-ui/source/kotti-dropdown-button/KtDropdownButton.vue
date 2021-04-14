@@ -5,6 +5,7 @@
 			:disabled="disabled"
 			:placement="placement"
 			:size="size"
+			trigger="hover"
 		>
 			<KtButtonGroup>
 				<KtButton

@@ -22,10 +22,20 @@ export const KtPopover = attachMeta(makeInstallable(KtPopoverVue), {
 		},
 	],
 	slots: {
-		content: { description: null, scope: null },
+		content: {
+			description: null,
+			scope: {
+				close: {
+					description: 'closes the popover',
+					type: 'function',
+				},
+			},
+		},
 		default: { description: null, scope: null },
 	},
-	typeScript: null,
+	typeScript: {
+		namespace: 'Kotti.Popover',
+	},
 })
 
 export const KtPopoverItem = attachMeta(makeInstallable(KtPopoverItemVue), {

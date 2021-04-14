@@ -1,14 +1,10 @@
 <template>
-	<div
-		v-on-clickaway="handleClickaway"
-		class="kt-popover"
-		:class="{ showPopper }"
-	>
-		<div ref="anchorRef" @click="handleAnchorClick">
-			<slot>Anchor</slot>
+	<div class="kt-popover">
+		<div ref="triggerRef">
+			<slot />
 		</div>
-		<div v-if="showPopper" ref="contentRef" :class="popperClass">
-			<slot :close="handleClickaway" name="content">
+		<div ref="contentRef" :class="popperClass">
+			<slot :close="onClose" name="content">
 				<IconTextItem
 					v-for="(option, index) in options"
 					:key="index"
@@ -24,22 +20,18 @@
 </template>
 
 <script lang="ts">
-import { createPopper } from '@popperjs/core'
-import {
-	computed,
-	defineComponent,
-	onMounted,
-	onUnmounted,
-	ref,
-	watch,
-} from '@vue/composition-api'
-import { mixin as clickaway } from 'vue-clickaway'
+import { useTippy } from '@3yourmind/vue-use-tippy'
+import { computed, defineComponent, Ref, ref } from '@vue/composition-api'
+import { Instance, roundArrow, Props as TippyProps } from 'tippy.js'
 
+import { TIPPY_LIGHT_BORDER_ARROW_HEIGHT } from '../constants'
 import { isYocoIcon } from '../validators'
 
 import IconTextItem from './components/IconTextItem.vue'
+import { KottiPopover } from './types'
 
-const optionIsValid = (option) =>
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const optionIsValid = (option: any): option is KottiPopover.Option =>
 	typeof option === 'object' &&
 	option !== null &&
 	(typeof option.icon === 'undefined' || isYocoIcon(option.icon)) &&
@@ -48,105 +40,74 @@ const optionIsValid = (option) =>
 	['undefined', 'string'].includes(typeof option.label) &&
 	['undefined', 'string'].includes(typeof option.dataTest)
 
-export default defineComponent({
+const TRIGGER_MAP: Record<KottiPopover.Trigger, TippyProps['trigger']> = {
+	[KottiPopover.Trigger.CLICK]: 'click focus',
+	[KottiPopover.Trigger.HOVER]: 'mouseenter focus',
+	[KottiPopover.Trigger.MANUAL]: 'manual',
+}
+
+export default defineComponent<KottiPopover.PropsInternal>({
 	name: 'KtPopover',
-	components: { IconTextItem },
-	mixins: [clickaway],
+	components: {
+		IconTextItem,
+	},
 	props: {
-		content: { default: '', type: String },
-		forceShowPopover: { default: null, type: Boolean },
 		options: {
 			default: () => [],
 			type: Array,
-			validator: (options) => options.every(optionIsValid),
+			validator: (options: KottiPopover.Option[]) =>
+				options.every(optionIsValid),
 		},
-		placement: { default: 'bottom', type: String },
-		size: { default: 'auto', type: String },
+		placement: {
+			default: KottiPopover.Placement.AUTO,
+			type: String,
+			validator: (value: unknown): value is KottiPopover.Placement =>
+				Object.values(KottiPopover.Placement).includes(
+					value as KottiPopover.Placement,
+				),
+		},
+		size: {
+			default: KottiPopover.Size.AUTO,
+			type: String,
+			validator: (value: unknown): value is KottiPopover.Size =>
+				Object.values(KottiPopover.Size).includes(value as KottiPopover.Size),
+		},
+		trigger: {
+			required: true,
+			type: String,
+			validator: (value: unknown): value is KottiPopover.Trigger =>
+				Object.values(KottiPopover.Trigger).includes(
+					value as KottiPopover.Trigger,
+				),
+		},
 	},
 	setup(props) {
-		const showPopper = ref(false)
-		const popper = ref(null)
-
-		const anchorRef = ref<HTMLElement | null>(null)
+		const triggerRef = ref<HTMLElement | null>(null)
 		const contentRef = ref<HTMLElement | null>(null)
 
-		const forceShowPopoverIsNull = computed(
-			() => props.forceShowPopover === null,
-		)
-
-		const initPopper = () => {
-			const propsOptions = {
+		const tippy = useTippy(
+			triggerRef,
+			computed(() => ({
+				appendTo: () => document.body,
+				arrow: roundArrow,
+				content: contentRef.value,
+				interactive: true,
+				maxWidth: 'none',
+				offset: [0, TIPPY_LIGHT_BORDER_ARROW_HEIGHT],
 				placement: props.placement,
-				modifiers: [
-					{
-						name: 'flip',
-						enabled: true,
-						options: {
-							padding: 8,
-						},
-					},
-					{
-						name: 'offset',
-						options: {
-							// eslint-disable-next-line no-magic-numbers
-							offset: [0, 8],
-						},
-					},
-					{
-						name: 'preventOverflow',
-						enabled: true,
-						options: {
-							padding: 8,
-						},
-					},
-				],
-			}
-
-			popper.value = createPopper(anchorRef.value, contentRef.value, {
-				...propsOptions,
-			})
-		}
-
-		watch(showPopper, (value) => {
-			if (value) initPopper()
-		})
-
-		watch(
-			() => props.forceShowPopover,
-			(value) => {
-				if (value !== null) {
-					showPopper.value = value
-				}
-			},
-		)
-
-		onMounted(() => {
-			if (!forceShowPopoverIsNull.value) {
-				showPopper.value = props.forceShowPopover
-			}
-		})
-
-		onUnmounted(() => {
-			if (forceShowPopoverIsNull.value && popper.value) {
-				popper.value.destroy()
-				popper.value = null
-			}
-		})
+				theme: 'light-border',
+				trigger: TRIGGER_MAP[props.trigger],
+			})),
+		).tippy as Ref<Instance>
 
 		return {
-			anchorRef,
+			close: () => tippy.value.hide(),
 			contentRef,
-			handleAnchorClick: () => {
-				if (!forceShowPopoverIsNull.value) return
-				showPopper.value = !showPopper.value
-			},
-			handleClickaway: () => {
-				if (!forceShowPopoverIsNull.value) return
-				showPopper.value = false
-			},
-			handleItemClick: (option) => {
+			handleItemClick: (option: KottiPopover.Option) => {
 				if (!option.isDisabled && option.onClick) option.onClick()
 			},
+			onClose: () => tippy.value.hide(),
+			open: () => tippy.value.show(),
 			popperClass: computed(() => {
 				const classes = ['kt-popper', `kt-popper--size-${props.size}`]
 
@@ -154,7 +115,7 @@ export default defineComponent({
 
 				return classes
 			}),
-			showPopper,
+			triggerRef,
 		}
 	},
 })
@@ -171,17 +132,11 @@ export default defineComponent({
 	}
 }
 
-// poper.js css
 .kt-popper {
-	z-index: $zindex-4;
-	padding: 0.8rem;
-	background: var(--white);
-	border-radius: $border-radius;
-	box-shadow: $box-shadow;
+	margin: 3px -1px; // tippy theme applies 5px 9px padding, therefore this equals 8px 8px
 
 	&--has-options {
 		min-width: 200px;
-		padding: 0.4rem;
 	}
 
 	&--size {
@@ -203,14 +158,6 @@ export default defineComponent({
 
 		&-xl {
 			width: 24rem;
-		}
-
-		&-xxl {
-			width: 28rem;
-		}
-
-		&-xxxl {
-			width: 32rem;
 		}
 	}
 }
