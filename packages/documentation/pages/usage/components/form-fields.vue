@@ -16,6 +16,7 @@
 							Supports <abbr title="Hypertext Markup Language">HTML</abbr> via <code>&lt;template v-slot:helpText&gt;</code>
 						</div>
 					</div>
+					<div v-for="slot in componentRepresenation.slots" :slot="slot.name" v-text="slot.content"/>
 					<div slot="default">
 						Default Slot
 					</div>
@@ -207,6 +208,11 @@
 						]"
 						size="small"
 					/>
+					<KtFormControllerList formKey="slots" v-if="componentDefinition.additionalSlots">
+						<template v-slot="{ values }">
+							<KtFieldText formKey="content" isOptional :label="`Slot - ${values.name}`" size="small"/>
+						</template>
+					</KtFormControllerList>
 				</KtFormControllerObject>
 			</div>
 			<div>
@@ -349,6 +355,7 @@ const components: Array<{
 	formKey: string
 	name: string
 	supports: Kotti.Field.Supports
+	additionalSlots?: Array<string>
 }> = [
 	{
 		additionalProps: DATE_ADDITIONAL_PROPS,
@@ -403,6 +410,7 @@ const components: Array<{
 		formKey: 'singleSelectValue',
 		name: 'KtFieldRadioGroup',
 		supports: { clear: false, decoration: false, tabIndex: true },
+		additionalSlots: ['header', 'content'],
 	},
 	{
 		additionalProps: ['actions'],
@@ -433,6 +441,7 @@ const components: Array<{
 		formKey: 'toggleGroupValue',
 		name: 'KtFieldToggleGroup',
 		supports: { clear: false, decoration: false, tabIndex: true },
+		additionalSlots: ['header', 'content'],
 	},
 ]
 
@@ -534,6 +543,7 @@ export default defineComponent({
 				numberHideMaximum: boolean
 				numberMaximum: Kotti.FieldNumber.Value
 				numberMinimum: Kotti.FieldNumber.Value
+				slots: ComponentValue['slots']
 				step: Kotti.FieldNumber.Value
 				toggleType: 'checkbox' | 'switch'
 			}
@@ -569,6 +579,10 @@ export default defineComponent({
 				numberHideMaximum: false,
 				numberMaximum: null,
 				numberMinimum: null,
+				slots: [
+					{ name: 'header', content: null },
+					{ name: 'content', content: null },
+				],
 				step: null,
 				toggleType: 'checkbox',
 			},
@@ -745,6 +759,14 @@ export default defineComponent({
 			return { ...standardProps, ...additionalProps }
 		})
 
+		const componentSlots = computed(() =>
+			componentDefinition.value.additionalSlots
+				? settings.value.additionalProps.slots?.filter(
+						({ content }) => content !== null,
+				  ) ?? []
+				: [],
+		)
+
 		const savedFields = ref<ComponentValue[]>(
 			(() => {
 				try {
@@ -767,6 +789,7 @@ export default defineComponent({
 				hasHelpTextSlot: settings.value.hasHelpTextSlot,
 				name: settings.value.component,
 				props: cloneDeep(componentProps.value),
+				slots: cloneDeep(componentSlots.value),
 				validation: settings.value.validation,
 			}),
 		)
